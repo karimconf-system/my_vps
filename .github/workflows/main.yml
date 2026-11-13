@@ -1,4 +1,4 @@
-name: Déploiement Docker sur VPS Ubuntu
+name: Déploiement Docker sur 2 VPS Ubuntu
 
 on:
   push:
