@@ -1,0 +1,53 @@
+name: Déploiement sur VPS Ubuntu
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Permet de lancer le déploiement manuellement depuis GitHub
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code source
+        uses: actions/checkout@v4
+
+      - name: Connexion SSH et déploiement sur le VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e # Arrête l'exécution immédiatement en cas d'erreur
+
+            echo "--- Début du déploiement ---"
+            cd /var/www/mon-projet
+
+            echo "--- Mise à jour du code depuis GitHub ---"
+            git fetch origin main
+            git reset --hard origin/main
+
+            # ==========================================
+            # CHOISISSEZ VOTRE STACK CI-DESSOUS :
+            # ==========================================
+
+            # --- OPTION 1 : Docker / Docker Compose ---
+            # docker compose pull
+            # docker compose up -d --build
+            # docker image prune -f
+
+            # --- OPTION 2 : Node.js (avec PM2) ---
+            # npm ci --production
+            # npm run build
+            # pm2 restart all
+
+            # --- OPTION 3 : Python (avec systemd) ---
+            # source venv/bin/activate
+            # pip install -r requirements.txt
+            # sudo systemctl restart mon-service
+
+            echo "--- Déploiement terminé avec succès ---"
