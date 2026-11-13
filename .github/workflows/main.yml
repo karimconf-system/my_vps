@@ -1,10 +1,10 @@
-name: Déploiement sur VPS Ubuntu
+name: Déploiement Docker sur VPS Ubuntu
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch: # Permet de lancer le déploiement manuellement depuis GitHub
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -14,7 +14,7 @@ jobs:
       - name: Récupérer le code source
         uses: actions/checkout@v4
 
-      - name: Connexion SSH et déploiement sur le VPS
+      - name: Déploiement distant via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -22,32 +22,21 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            set -e # Arrête l'exécution immédiatement en cas d'erreur
+            set -e
 
-            echo "--- Début du déploiement ---"
-            cd /var/www/mon-projet
+            # 1. Aller dans le dossier du projet sur le VPS
+            cd /chemin/vers/votre/projet
 
-            echo "--- Mise à jour du code depuis GitHub ---"
+            echo "--- Récupération des dernières modifications ---"
             git fetch origin main
             git reset --hard origin/main
 
-            # ==========================================
-            # CHOISISSEZ VOTRE STACK CI-DESSOUS :
-            # ==========================================
+            echo "--- Reconstruction et redémarrage des conteneurs ---"
+            # Si vous utilisez la syntaxe moderne (v2) : docker compose
+            docker compose down
+            docker compose up -d --build
 
-            # --- OPTION 1 : Docker / Docker Compose ---
-            # docker compose pull
-            # docker compose up -d --build
-            # docker image prune -f
+            echo "--- Nettoyage des anciennes images Docker inutilisées ---"
+            docker image prune -f
 
-            # --- OPTION 2 : Node.js (avec PM2) ---
-            # npm ci --production
-            # npm run build
-            # pm2 restart all
-
-            # --- OPTION 3 : Python (avec systemd) ---
-            # source venv/bin/activate
-            # pip install -r requirements.txt
-            # sudo systemctl restart mon-service
-
-            echo "--- Déploiement terminé avec succès ---"
+            echo "--- Déploiement Docker terminé avec succès ---"
